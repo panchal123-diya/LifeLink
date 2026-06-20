@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Blood Banks - LifeLink{% endblock %}
+
+{% block content %}
+<!-- Search Header -->
+<div class="bg-danger text-white py-5" style="background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);">
+    <div class="container text-center" data-aos="fade-down">
+        <h2 class="display-5 fw-bold mb-3"><i class="fa-solid fa-droplet"></i> Find Blood Availability</h2>
+        <p class="lead opacity-75 mb-4">Search for specific blood groups in verified blood banks near you.</p>
+        
+        <!-- Filter Form -->
+        <form method="get" class="bg-white p-3 rounded-pill shadow-lg d-inline-flex mx-auto flex-column flex-md-row gap-2 align-items-center" style="max-width: 800px; width: 100%;">
+            <div class="input-group flex-grow-1" style="border-right: 1px solid #e2e8f0;">
+                <span class="input-group-text bg-transparent border-0 text-muted"><i class="fa-solid fa-location-dot"></i></span>
+                <input type="text" name="city" class="form-control border-0 shadow-none" placeholder="Enter City (e.g. Chicago)" value="{{ city|default:'' }}">
+            </div>
+            <div class="input-group flex-grow-1">
+                <span class="input-group-text bg-transparent border-0 text-muted"><i class="fa-solid fa-droplet"></i></span>
+                <select name="blood_group" class="form-select border-0 shadow-none">
+                    <option value="">Any Blood Group</option>
+                    <option value="A+" {% if blood_group == 'A+' %}selected{% endif %}>A+</option>
+                    <option value="A-" {% if blood_group == 'A-' %}selected{% endif %}>A-</option>
+                    <option value="B+" {% if blood_group == 'B+' %}selected{% endif %}>B+</option>
+                    <option value="B-" {% if blood_group == 'B-' %}selected{% endif %}>B-</option>
+                    <option value="AB+" {% if blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+                    <option value="AB-" {% if blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+                    <option value="O+" {% if blood_group == 'O+' %}selected{% endif %}>O+</option>
+                    <option value="O-" {% if blood_group == 'O-' %}selected{% endif %}>O-</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-dark rounded-pill px-5 fw-bold shadow-sm h-100 py-2">Search</button>
+        </form>
+    </div>
+</div>
+
+<div class="container mt-5 mb-5">
+    
+    {% if searched and not has_results %}
+        <!-- NO RESULTS FALLBACK (SOS) -->
+        <div class="row justify-content-center" data-aos="zoom-in">
+            <div class="col-md-8">
+                <div class="card shadow-lg border-danger border-2 text-center p-5 rounded-4 glass-card">
+                    <div class="card-body">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger rounded-circle mb-4" style="width: 100px; height: 100px;">
+                            <i class="fa-solid fa-triangle-exclamation fa-3x"></i>
+                        </div>
+                        <h2 class="fw-bold text-danger mb-3">No Blood Banks Found</h2>
+                        <p class="lead text-muted mb-4">We couldn't find any blood banks matching your criteria. Don't worry, you can instantly broadcast a request to all registered donors in your city.</p>
+                        
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'create_request' %}?city={{ city }}&blood_group={{ blood_group|urlencode }}" class="btn btn-danger btn-lg rounded-pill px-5 shadow-lg fw-bold heartbeat-animation">
+                                <i class="fa-solid fa-truck-medical me-2"></i> Request Blood Now
+                            </a>
+                            <a href="{% url 'bloodbank_search' %}" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Clear Search</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- RESULTS LIST -->
+        <div class="row g-4">
+            {% for bb in bloodbanks %}
+                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                    <div class="card shadow-sm h-100 border-0 glass-card" style="transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0,0,0,0.075)';">
+                        <img src="https://images.unsplash.com/photo-1615461066841-6116e61058f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="card-img-top" alt="Blood Bank Banner" style="height: 120px; object-fit: cover;">
+                        
+                        <div class="card-body position-relative pt-4">
+                            <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-success p-2 border border-2 border-white shadow-sm" style="margin-top: -15px; margin-right: 10px;" title="Verified Blood Bank">
+                                <i class="fa-solid fa-check-double"></i>
+                            </span>
+                            
+                            <h5 class="card-title fw-bold text-danger">{{ bb.name }}</h5>
+                            <p class="text-muted small mb-1"><i class="fa-solid fa-location-dot me-2 text-danger"></i> {{ bb.city|default:"City not specified" }}</p>
+                            <p class="text-muted small mb-3"><i class="fa-solid fa-phone me-2 text-danger"></i> {{ bb.phone|default:"Phone not provided" }}</p>
+                            
+                            <!-- Blood Stock Grid -->
+                            <div class="row text-center mt-3 g-2">
+                                <div class="col-3">
+                                    <div class="border rounded p-1 {% if bb.a_pos > 0 and blood_group == 'A+' %}bg-danger text-white border-danger shadow-sm{% elif bb.a_pos > 0 %}bg-light{% else %}opacity-50{% endif %}">
+                                        <strong class="d-block">{{ bb.a_pos }}</strong>
+                                        <small class="{% if bb.a_pos > 0 and blood_group == 'A+' %}text-white{% else %}text-danger{% endif %} fw-bold">A+</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-1 {% if bb.a_neg > 0 and blood_group == 'A-' %}bg-danger text-white border-danger shadow-sm{% elif bb.a_neg > 0 %}bg-light{% else %}opacity-50{% endif %}">
+                                        <strong class="d-block">{{ bb.a_neg }}</strong>
+                                        <small class="{% if bb.a_neg > 0 and blood_group == 'A-' %}text-white{% else %}text-danger{% endif %} fw-bold">A-</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-1 {% if bb.b_pos > 0 and blood_group == 'B+' %}bg-danger text-white border-danger shadow-sm{% elif bb.b_pos > 0 %}bg-light{% else %}opacity-50{% endif %}">
+                                        <strong class="d-block">{{ bb.b_pos }}</strong>
+                                        <small class="{% if bb.b_pos > 0 and blood_group == 'B+' %}text-white{% else %}text-danger{% endif %} fw-bold">B+</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-1 {% if bb.b_neg > 0 and blood_group == 'B-' %}bg-danger text-white border-danger shadow-sm{% elif bb.b_neg > 0 %}bg-light{% else %}opacity-50{% endif %}">
+                                        <strong class="d-block">{{ bb.b_neg }}</strong>
+                                        <small class="{% if bb.b_neg > 0 and blood_group == 'B-' %}text-white{% else %}text-danger{% endif %} fw-bold">B-</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-1 {% if bb.ab_pos > 0 and blood_group == 'AB+' %}bg-danger text-white border-danger shadow-sm{% elif bb.ab_pos > 0 %}bg-light{% else %}opacity-50{% endif %}">
+                                        <strong class="d-block">{{ bb.ab_pos }}</strong>
+                                        <small class="{% if bb.ab_pos > 0 and blood_group == 'AB+' %}text-white{% else %}text-danger{% endif %} fw-bold">AB+</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-1 {% if bb.ab_neg > 0 and blood_group == 'AB-' %}bg-danger text-white border-danger shadow-sm{% elif bb.ab_neg > 0 %}bg-light{% else %}opacity-50{% endif %}">
+                                        <strong class="d-block">{{ bb.ab_neg }}</strong>
+                                        <small class="{% if bb.ab_neg > 0 and blood_group == 'AB-' %}text-white{% else %}text-danger{% endif %} fw-bold">AB-</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-1 {% if bb.o_pos > 0 and blood_group == 'O+' %}bg-danger text-white border-danger shadow-sm{% elif bb.o_pos > 0 %}bg-light{% else %}opacity-50{% endif %}">
+                                        <strong class="d-block">{{ bb.o_pos }}</strong>
+                                        <small class="{% if bb.o_pos > 0 and blood_group == 'O+' %}text-white{% else %}text-danger{% endif %} fw-bold">O+</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-1 {% if bb.o_neg > 0 and blood_group == 'O-' %}bg-danger text-white border-danger shadow-sm{% elif bb.o_neg > 0 %}bg-light{% else %}opacity-50{% endif %}">
+                                        <strong class="d-block">{{ bb.o_neg }}</strong>
+                                        <small class="{% if bb.o_neg > 0 and blood_group == 'O-' %}text-white{% else %}text-danger{% endif %} fw-bold">O-</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <a href="tel:{{ bb.phone }}" class="btn btn-outline-danger w-100 rounded-pill fw-bold"><i class="fa-solid fa-phone me-1"></i> Call Blood Bank</a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0 pt-0 pb-3">
+                            <div class="d-flex align-items-center text-muted small">
+                                <i class="fa-solid fa-clock-rotate-left text-warning me-2"></i>
+                                <span>Updated {{ bb.updated_at|timesince }} ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                {% if not searched %}
+                    <div class="col-12 text-center py-5 my-5" data-aos="fade-in">
+                        <i class="fa-solid fa-flask fa-4x text-muted mb-4 opacity-50"></i>
+                        <h3 class="fw-bold">No blood banks available</h3>
+                        <p class="text-muted fs-5">There are currently no verified blood banks in our database.</p>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.05); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.05); }
+    60% { transform: scale(1); }
+}
+.heartbeat-animation {
+    animation: heartbeat 2s infinite;
+}
+</style>
+{% endblock %}

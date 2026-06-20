@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% block title %}Hospital Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 glass-card h-100">
+                <div class="card-body">
+                    <h4 class="card-title fw-bold text-primary"><i class="fa-solid fa-hospital"></i> {{ hospital.name|default:"Hospital Profile" }}</h4>
+                    <p class="text-muted small mb-1">Registration: {{ hospital.registration_number|default:"Not set" }}</p>
+                    <p class="text-muted small mb-3"><i class="fa-solid fa-location-dot me-1"></i> {{ hospital.city|default:"No city" }} | <i class="fa-solid fa-phone me-1"></i> {{ hospital.phone|default:"No phone" }}</p>
+                    <span class="badge {% if hospital.is_verified %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill px-3 py-2 shadow-sm">
+                        {% if hospital.is_verified %}<i class="fa-solid fa-check me-1"></i> Verified{% else %}<i class="fa-solid fa-clock me-1"></i> Pending Verification{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="row g-3 h-100">
+                <div class="col-md-4">
+                    <div class="card bg-primary text-white shadow-sm border-0 h-100 text-center justify-content-center py-3" style="background: linear-gradient(135deg, var(--primary-color) 0%, #0369a1 100%);">
+                        <i class="fa-solid fa-bed-pulse fa-2x mb-2 opacity-75"></i>
+                        <h2 class="fw-bold mb-0">{{ hospital.icu_beds }}</h2>
+                        <span class="small opacity-75">ICU Beds</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-info text-white shadow-sm border-0 h-100 text-center justify-content-center py-3" style="background: linear-gradient(135deg, #0dcaf0 0%, #087990 100%);">
+                        <i class="fa-solid fa-lungs fa-2x mb-2 opacity-75"></i>
+                        <h2 class="fw-bold mb-0">{{ hospital.oxygen_beds }}</h2>
+                        <span class="small opacity-75">Oxygen Beds</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success text-white shadow-sm border-0 h-100 text-center justify-content-center py-3" style="background: linear-gradient(135deg, #198754 0%, #0f5132 100%);">
+                        <i class="fa-solid fa-bed fa-2x mb-2 opacity-75"></i>
+                        <h2 class="fw-bold mb-0">{{ hospital.general_beds }}</h2>
+                        <span class="small opacity-75">General Beds</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4 mt-2">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 glass-card mb-4">
+                <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0">
+                    <h5 class="card-title fw-bold">Update Profile & Inventory</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label small text-muted fw-bold">Hospital Name</label>
+                                {{ form.name }}
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-muted fw-bold">Registration No.</label>
+                                {{ form.registration_number }}
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-muted fw-bold">Phone</label>
+                                {{ form.phone }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small text-muted fw-bold">City</label>
+                                {{ form.city }}
+                            </div>
+                        </div>
+                        <hr class="my-4 text-muted opacity-25">
+                        <h6 class="mb-3 fw-bold text-primary">Bed Availability</h6>
+                        <div class="row g-3">
+                            <div class="col-4">
+                                <label class="form-label small text-muted fw-bold">ICU</label>
+                                {{ form.icu_beds }}
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small text-muted fw-bold">Oxygen</label>
+                                {{ form.oxygen_beds }}
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small text-muted fw-bold">General</label>
+                                {{ form.general_beds }}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-4 rounded-pill shadow-sm fw-bold">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Statistics Chart -->
+            <div class="card shadow-sm border-0 glass-card">
+                <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0">
+                    <h5 class="card-title fw-bold">Bed Request Statistics</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div style="height: 250px; width: 100%;">
+                        <canvas id="reqStatsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 glass-card mb-4">
+                <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0">
+                    <h5 class="card-title fw-bold">Bed Capacity Overview</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div style="height: 250px; width: 100%;">
+                        <canvas id="bedChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bed Requests List -->
+            <div class="card shadow-sm border-0 glass-card mb-4">
+                <div class="card-header bg-transparent border-bottom-0 pt-4 pb-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">Incoming Bed Requests</h5>
+                    <span class="badge bg-primary rounded-pill">{{ stats.pending }} Pending</span>
+                </div>
+                <div class="card-body pt-0">
+                    {% if bed_requests %}
+                        <div class="list-group list-group-flush gap-3">
+                            {% for req in bed_requests %}
+                                <div class="list-group-item bg-light border rounded-3 p-3 shadow-sm position-relative overflow-hidden hover-transform" style="transition: transform 0.2s;">
+                                    {% if req.status == 'Approved' %}
+                                        <div class="position-absolute top-0 start-0 w-100 bg-success" style="height: 4px;"></div>
+                                    {% elif req.status == 'Rejected' or req.status == 'Cancelled' %}
+                                        <div class="position-absolute top-0 start-0 w-100 bg-danger" style="height: 4px;"></div>
+                                    {% else %}
+                                        <div class="position-absolute top-0 start-0 w-100 bg-warning" style="height: 4px;"></div>
+                                    {% endif %}
+                                    
+                                    <div class="d-flex w-100 justify-content-between align-items-start mb-2 mt-1">
+                                        <h6 class="fw-bold text-dark mb-0">{{ req.patient_name }} ({{ req.age }}{{ req.gender|make_list|first }})</h6>
+                                        <small class="text-muted">{{ req.created_at|timesince }} ago</small>
+                                    </div>
+                                    
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-sm-6">
+                                            <p class="mb-1 text-muted small"><i class="fa-solid fa-phone me-1"></i> {{ req.contact_number }}</p>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="mb-1 text-muted small"><i class="fa-solid fa-bed me-1 text-primary"></i> <span class="badge bg-primary">{{ req.bed_type }}</span></p>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <p class="mb-1 text-muted small"><i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i> <strong>Priority:</strong> {{ req.priority }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr class="opacity-25 my-2">
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <div>
+                                            {% if req.status == 'Approved' %}
+                                                <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fa-solid fa-check me-1"></i> Approved</span>
+                                            {% elif req.status == 'Rejected' %}
+                                                <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
+                                            {% elif req.status == 'Cancelled' %}
+                                                <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="fa-solid fa-ban me-1"></i> Cancelled</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="fa-solid fa-spinner fa-spin me-1"></i> {{ req.status }}</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if req.status == 'Pending' or req.status == 'Under Review' %}
+                                            <div class="d-flex gap-2">
+                                                <form action="{% url 'respond_bed_request' req.id %}" method="post" class="m-0">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="approve">
+                                                    <button type="submit" class="btn btn-sm btn-success rounded-pill shadow-sm px-3 fw-bold">Approve</button>
+                                                </form>
+                                                <form action="{% url 'respond_bed_request' req.id %}" method="post" class="m-0">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="reject">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill shadow-sm px-3 fw-bold">Reject</button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fa-solid fa-inbox fa-3x text-muted opacity-50 mb-3"></i>
+                            <h5 class="fw-bold">No Requests Yet</h5>
+                            <p class="text-muted small">When users request beds at your hospital, they will appear here.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('bedChart').getContext('2d');
+    const ctxStats = document.getElementById('reqStatsChart').getContext('2d');
+    
+    // Theme aware colors
+    const getColors = () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return {
+            text: isDark ? '#F8FAFC' : '#334155',
+            icu: '#0EA5E9',
+            oxygen: '#0dcaf0',
+            general: '#10B981',
+            pending: '#f59e0b',
+            approved: '#10b981',
+            rejected: '#ef4444'
+        };
+    };
+
+    let colors = getColors();
+    
+    let bedChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['ICU Beds', 'Oxygen Beds', 'General Beds'],
+            datasets: [{
+                data: [
+                    parseInt("{{ hospital.icu_beds|default:'0' }}", 10), 
+                    parseInt("{{ hospital.oxygen_beds|default:'0' }}", 10), 
+                    parseInt("{{ hospital.general_beds|default:'0' }}", 10)
+                ],
+                backgroundColor: [colors.icu, colors.oxygen, colors.general],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: colors.text, padding: 20, font: { family: 'Inter', size: 13 } }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+    
+    let reqStatsChart = new Chart(ctxStats, {
+        type: 'pie',
+        data: {
+            labels: ['Pending', 'Approved', 'Rejected'],
+            datasets: [{
+                data: [
+                    parseInt("{{ stats.pending|default:'0' }}", 10), 
+                    parseInt("{{ stats.approved|default:'0' }}", 10), 
+                    parseInt("{{ stats.rejected|default:'0' }}", 10)
+                ],
+                backgroundColor: [colors.pending, colors.approved, colors.rejected],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: colors.text, padding: 20, font: { family: 'Inter', size: 13 } }
+                }
+            }
+        }
+    });
+    
+    window.addEventListener('themeChanged', () => {
+        colors = getColors();
+        bedChart.options.plugins.legend.labels.color = colors.text;
+        reqStatsChart.options.plugins.legend.labels.color = colors.text;
+        bedChart.update();
+        reqStatsChart.update();
+    });
+});
+</script>
+<style>
+.hover-transform:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}

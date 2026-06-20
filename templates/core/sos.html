@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}SOS Emergency - LifeLink{% endblock %}
+
+{% block content %}
+<div class="bg-danger text-white min-vh-100 d-flex flex-column align-items-center justify-content-center py-5" style="background: linear-gradient(135deg, #dc3545 0%, #7a121d 100%); margin-top: -76px; padding-top: 100px !important;">
+    <div class="container text-center" data-aos="zoom-in">
+        <div class="d-inline-block bg-white text-danger rounded-circle p-4 mb-4 shadow-lg heartbeat-animation">
+            <i class="fa-solid fa-truck-medical fa-4x"></i>
+        </div>
+        <h1 class="display-3 fw-bold mb-4">EMERGENCY SOS</h1>
+        <p class="lead mb-5 opacity-75 mx-auto" style="max-width: 600px;">If this is a medical emergency, please call an ambulance immediately before requesting blood.</p>
+        
+        <div class="row justify-content-center g-4 mb-5">
+            <div class="col-md-5">
+                <a href="tel:108" class="card text-decoration-none h-100 border-0 shadow-lg bg-white text-danger hover-transform">
+                    <div class="card-body p-4">
+                        <i class="fa-solid fa-phone fa-3x mb-3"></i>
+                        <h3 class="fw-bold">Call 108</h3>
+                        <p class="text-muted mb-0">National Ambulance Service</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-5">
+                <a href="{% url 'create_request' %}?urgency=Critical" class="card text-decoration-none h-100 border-0 shadow-lg bg-dark text-white hover-transform">
+                    <div class="card-body p-4">
+                        <i class="fa-solid fa-droplet fa-3x mb-3 text-danger"></i>
+                        <h3 class="fw-bold">Request Blood</h3>
+                        <p class="text-white-50 mb-0">Broadcast critical request to nearby donors</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="glass-card p-4 rounded-4 mx-auto text-start border-0" style="max-width: 800px; background: rgba(0,0,0,0.2);">
+            <h4 class="fw-bold mb-3"><i class="fa-solid fa-address-book me-2"></i> Important Contacts</h4>
+            <div class="row g-3">
+                <div class="col-sm-4">
+                    <div class="p-3 bg-white bg-opacity-10 rounded">
+                        <h6 class="fw-bold mb-1">Police</h6>
+                        <span class="fs-4 fw-bold text-white">100</span>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="p-3 bg-white bg-opacity-10 rounded">
+                        <h6 class="fw-bold mb-1">Fire Brigade</h6>
+                        <span class="fs-4 fw-bold text-white">101</span>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="p-3 bg-white bg-opacity-10 rounded">
+                        <h6 class="fw-bold mb-1">Disaster Mgmt</h6>
+                        <span class="fs-4 fw-bold text-white">1078</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.1); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.1); }
+    60% { transform: scale(1); }
+}
+.heartbeat-animation {
+    animation: heartbeat 2s infinite;
+}
+.hover-transform {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-transform:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2) !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

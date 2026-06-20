@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Analytics Dashboard - HealthBridge{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Platform Analytics</h2>
+        <button class="btn btn-outline-primary" onclick="window.location.reload();"><i class="fa-solid fa-rotate-right"></i> Refresh Data</button>
+    </div>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <i class="fa-solid fa-hospital fa-3x text-primary mb-3"></i>
+                    <h1 class="display-4 fw-bold">{{ total_hospitals }}</h1>
+                    <p class="text-muted fs-5 mb-0">Total Hospitals</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <i class="fa-solid fa-droplet fa-3x text-danger mb-3"></i>
+                    <h1 class="display-4 fw-bold">{{ total_bloodbanks }}</h1>
+                    <p class="text-muted fs-5 mb-0">Total Blood Banks</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4 text-center">
+                    <i class="fa-solid fa-users fa-3x text-success mb-3"></i>
+                    <h1 class="display-4 fw-bold">{{ total_donors }}</h1>
+                    <p class="text-muted fs-5 mb-0">Registered Donors</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-transparent py-3 border-bottom">
+                    <h5 class="mb-0">Requests Overview</h5>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="requestsChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-transparent py-3 border-bottom">
+                    <h5 class="mb-0">Request Urgency</h5>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="urgencyChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Theme aware colors
+    const getColors = () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return {
+            text: isDark ? '#F8FAFC' : '#334155',
+            grid: isDark ? '#334155' : '#E2E8F0',
+            primary: '#0EA5E9',
+            success: '#10B981',
+            warning: '#F59E0B',
+            danger: '#EF4444'
+        };
+    };
+
+    let colors = getColors();
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: { color: colors.text }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: colors.text, precision: 0 },
+                grid: { color: colors.grid }
+            },
+            x: {
+                ticks: { color: colors.text },
+                grid: { color: colors.grid }
+            }
+        }
+    };
+
+    const ctxRequests = document.getElementById('requestsChart').getContext('2d');
+    let requestsChart = new Chart(ctxRequests, {
+        type: 'bar',
+        data: {
+            labels: ['Total', 'Fulfilled', 'Pending/Other'],
+            datasets: [{
+                label: 'Blood Requests',
+                data: [
+                    parseInt("{{ total_requests|default:'0' }}", 10), 
+                    parseInt("{{ fulfilled_requests|default:'0' }}", 10), 
+                    parseInt("{{ total_requests|default:'0' }}", 10) - parseInt("{{ fulfilled_requests|default:'0' }}", 10)
+                ],
+                backgroundColor: [colors.primary, colors.success, colors.warning],
+                borderRadius: 6
+            }]
+        },
+        options: chartOptions
+    });
+
+    const ctxUrgency = document.getElementById('urgencyChart').getContext('2d');
+    let urgencyChart = new Chart(ctxUrgency, {
+        type: 'doughnut',
+        data: {
+            labels: ['Critical', 'Urgent/Normal'],
+            datasets: [{
+                data: [
+                    parseInt("{{ critical_requests|default:'0' }}", 10), 
+                    parseInt("{{ total_requests|default:'0' }}", 10) - parseInt("{{ critical_requests|default:'0' }}", 10)
+                ],
+                backgroundColor: [colors.danger, colors.primary],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: colors.text }
+                }
+            }
+        }
+    });
+
+    // Listen to custom theme toggle event from theme.js
+    window.addEventListener('themeChanged', () => {
+        colors = getColors();
+        
+        requestsChart.options.plugins.legend.labels.color = colors.text;
+        requestsChart.options.scales.x.ticks.color = colors.text;
+        requestsChart.options.scales.x.grid.color = colors.grid;
+        requestsChart.options.scales.y.ticks.color = colors.text;
+        requestsChart.options.scales.y.grid.color = colors.grid;
+        requestsChart.update();
+        
+        urgencyChart.options.plugins.legend.labels.color = colors.text;
+        urgencyChart.update();
+    });
+});
+</script>
+{% endblock %}

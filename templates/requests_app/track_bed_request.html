@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}Track Bed Request - LifeLink{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg border-0 glass-card">
+                <div class="card-header bg-primary text-white py-4 text-center rounded-top" style="background: linear-gradient(135deg, var(--primary-color) 0%, #0369a1 100%);">
+                    <h3 class="mb-0 fw-bold"><i class="fa-solid fa-satellite-dish me-2"></i> Live Bed Request Tracking</h3>
+                    <p class="mb-0 opacity-75 small mt-1">Request ID: {{ bed_request.tracking_token }}</p>
+                </div>
+                
+                <div class="card-body p-4 p-md-5">
+                    
+                    <!-- Details Grid -->
+                    <div class="row g-4 mb-5 bg-light p-4 rounded-4 border">
+                        <div class="col-md-3 col-6">
+                            <small class="text-muted fw-bold text-uppercase d-block mb-1">Patient</small>
+                            <span class="fw-bold fs-5">{{ bed_request.patient_name }}</span>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <small class="text-muted fw-bold text-uppercase d-block mb-1">Bed Type</small>
+                            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill shadow-sm">{{ bed_request.bed_type }}</span>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <small class="text-muted fw-bold text-uppercase d-block mb-1">Hospital</small>
+                            <span class="fw-medium">{{ bed_request.hospital.name }}</span>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <small class="text-muted fw-bold text-uppercase d-block mb-1">Priority</small>
+                            <span class="badge {% if bed_request.priority == 'Critical' %}bg-danger{% elif bed_request.priority == 'High' %}bg-warning text-dark{% else %}bg-secondary{% endif %} fs-6 px-3 py-2 rounded-pill shadow-sm">{{ bed_request.priority }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Tracking Timeline -->
+                    <h4 class="fw-bold mb-4 text-center">Status Timeline</h4>
+                    <div class="position-relative mx-auto my-5" style="max-width: 600px;">
+                        
+                        <!-- Connecting Line -->
+                        <div class="position-absolute top-50 start-0 translate-middle-y w-100 bg-secondary opacity-25" style="height: 4px; z-index: 1;"></div>
+                        
+                        <!-- Progress Line -->
+                        {% if bed_request.status == 'Cancelled' or bed_request.status == 'Rejected' %}
+                            <div class="position-absolute top-50 start-0 translate-middle-y bg-danger" style="height: 4px; z-index: 1; width: 100%; transition: width 1s ease;"></div>
+                        {% elif bed_request.status == 'Pending' %}
+                            <div class="position-absolute top-50 start-0 translate-middle-y bg-success" style="height: 4px; z-index: 1; width: 25%; transition: width 1s ease;"></div>
+                        {% elif bed_request.status == 'Under Review' %}
+                            <div class="position-absolute top-50 start-0 translate-middle-y bg-success" style="height: 4px; z-index: 1; width: 50%; transition: width 1s ease;"></div>
+                        {% elif bed_request.status == 'Approved' %}
+                            <div class="position-absolute top-50 start-0 translate-middle-y bg-success" style="height: 4px; z-index: 1; width: 100%; transition: width 1s ease;"></div>
+                        {% else %}
+                            <div class="position-absolute top-50 start-0 translate-middle-y bg-success" style="height: 4px; z-index: 1; width: 100%; transition: width 1s ease;"></div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between position-relative" style="z-index: 2;">
+                            
+                            <!-- Step 1: Created -->
+                            <div class="text-center" style="width: 100px;">
+                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 shadow" style="width: 50px; height: 50px; border: 4px solid white;">
+                                    <i class="fa-solid fa-file-medical"></i>
+                                </div>
+                                <span class="fw-bold small d-block">Created</span>
+                                <small class="text-muted" style="font-size: 0.7rem;">{{ bed_request.created_at|date:"H:i" }}</small>
+                            </div>
+                            
+                            <!-- Step 2: Reviewing -->
+                            <div class="text-center" style="width: 100px;">
+                                <div class="{% if bed_request.status in 'Under Review,Approved,Completed' %}bg-success{% elif bed_request.status == 'Pending' %}bg-secondary pulse-warning{% else %}bg-secondary{% endif %} text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 shadow" style="width: 50px; height: 50px; border: 4px solid white;">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                                <span class="fw-bold small d-block">Reviewing</span>
+                            </div>
+                            
+                            <!-- Step 3: Approved / Rejected -->
+                            <div class="text-center" style="width: 100px;">
+                                {% if bed_request.status in 'Approved,Completed' %}
+                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 shadow pulse-success" style="width: 50px; height: 50px; border: 4px solid white;">
+                                        <i class="fa-solid fa-bed"></i>
+                                    </div>
+                                    <span class="fw-bold small d-block text-success">Approved</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;">Bed Reserved</small>
+                                {% elif bed_request.status == 'Rejected' %}
+                                    <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 shadow" style="width: 50px; height: 50px; border: 4px solid white;">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </div>
+                                    <span class="fw-bold small d-block text-danger">Rejected</span>
+                                {% elif bed_request.status == 'Cancelled' %}
+                                    <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 shadow" style="width: 50px; height: 50px; border: 4px solid white;">
+                                        <i class="fa-solid fa-ban"></i>
+                                    </div>
+                                    <span class="fw-bold small d-block text-danger">Cancelled</span>
+                                {% else %}
+                                    <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 shadow" style="width: 50px; height: 50px; border: 4px solid white;">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <span class="fw-bold small d-block text-muted">Decision</span>
+                                {% endif %}
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+                    <!-- Alert Box -->
+                    {% if bed_request.status == 'Pending' or bed_request.status == 'Under Review' %}
+                        <div class="alert alert-warning text-center border-warning border-opacity-50 shadow-sm rounded-3">
+                            <i class="fa-solid fa-circle-notch fa-spin me-2 text-warning"></i>
+                            <strong>Request is {{ bed_request.status }}.</strong> The hospital has been notified.
+                        </div>
+                    {% elif bed_request.status == 'Approved' %}
+                        <div class="alert alert-success text-center border-success border-opacity-50 shadow-sm rounded-3">
+                            <i class="fa-solid fa-circle-check fa-2x mb-2 text-success"></i><br>
+                            <strong>Request Approved!</strong><br>
+                            A {{ bed_request.bed_type }} bed has been reserved for you. Please proceed to the hospital immediately.
+                        </div>
+                    {% elif bed_request.status == 'Rejected' %}
+                        <div class="alert alert-danger text-center border-danger border-opacity-50 shadow-sm rounded-3">
+                            <i class="fa-solid fa-circle-xmark fa-2x mb-2 text-danger"></i><br>
+                            <strong>Request Rejected.</strong><br>
+                            Unfortunately, the hospital cannot accommodate this request right now. Please try another hospital.
+                        </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-5 d-flex justify-content-center gap-3">
+                        <button onclick="window.location.reload();" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm"><i class="fa-solid fa-rotate-right me-2"></i> Refresh</button>
+                        {% if bed_request.status in 'Pending,Under Review,Approved' %}
+                        <form method="post" class="m-0" onsubmit="return confirm('Are you sure you want to cancel this bed request?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="cancel">
+                            <button type="submit" class="btn btn-outline-danger rounded-pill px-4 fw-bold shadow-sm"><i class="fa-solid fa-ban me-2"></i> Cancel Request</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes pulse-success {
+    0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(25, 135, 84, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+}
+.pulse-success { animation: pulse-success 2s infinite; }
+
+@keyframes pulse-warning {
+    0% { box-shadow: 0 0 0 0 rgba(108, 117, 125, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(108, 117, 125, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(108, 117, 125, 0); }
+}
+.pulse-warning { animation: pulse-warning 2s infinite; }
+</style>
+{% endblock %}

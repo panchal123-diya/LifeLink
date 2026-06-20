@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% block title %}Blood Bank Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 glass-card h-100">
+                <div class="card-body">
+                    <h4 class="card-title fw-bold text-danger"><i class="fa-solid fa-droplet"></i> {{ bloodbank.name|default:"Blood Bank Profile" }}</h4>
+                    <p class="text-muted small mb-1">License: {{ bloodbank.license_number|default:"Not set" }}</p>
+                    <p class="text-muted small mb-3"><i class="fa-solid fa-location-dot me-1"></i> {{ bloodbank.city|default:"No city" }} | <i class="fa-solid fa-phone me-1"></i> {{ bloodbank.phone|default:"No phone" }}</p>
+                    <span class="badge {% if bloodbank.is_verified %}bg-success{% else %}bg-warning text-dark{% endif %} rounded-pill px-3 py-2 shadow-sm">
+                        {% if bloodbank.is_verified %}<i class="fa-solid fa-check me-1"></i> Verified{% else %}<i class="fa-solid fa-clock me-1"></i> Pending Verification{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 glass-card h-100">
+                <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold text-danger mb-0">Total Blood Stock</h5>
+                    <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="fa-solid fa-file-export me-1"></i> Export Report</button>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div style="height: 180px; width: 100%;">
+                        <canvas id="bloodChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4 mt-2">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 glass-card">
+                <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0">
+                    <h5 class="card-title fw-bold">Update Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label small text-muted fw-bold">Name</label>
+                            {{ form.name }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted fw-bold">License Number</label>
+                            {{ form.license_number }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted fw-bold">Phone</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted fw-bold">City</label>
+                            {{ form.city }}
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3 fw-bold text-danger border-bottom pb-2">Blood Stock Update (Units)</h6>
+                        <div class="row g-2">
+                            <div class="col-6 mb-2">
+                                <label class="form-label small fw-bold text-danger">A+</label>
+                                {{ form.a_pos }}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <label class="form-label small fw-bold text-danger">A-</label>
+                                {{ form.a_neg }}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <label class="form-label small fw-bold text-danger">B+</label>
+                                {{ form.b_pos }}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <label class="form-label small fw-bold text-danger">B-</label>
+                                {{ form.b_neg }}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <label class="form-label small fw-bold text-danger">AB+</label>
+                                {{ form.ab_pos }}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <label class="form-label small fw-bold text-danger">AB-</label>
+                                {{ form.ab_neg }}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <label class="form-label small fw-bold text-danger">O+</label>
+                                {{ form.o_pos }}
+                            </div>
+                            <div class="col-6 mb-2">
+                                <label class="form-label small fw-bold text-danger">O-</label>
+                                {{ form.o_neg }}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100 mt-3 rounded-pill shadow-sm fw-bold">Save Stock & Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 glass-card h-100">
+                <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0">
+                    <h5 class="card-title fw-bold">Current Stock Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center g-3">
+                        <div class="col-6 col-md-3">
+                            <div class="p-4 border rounded bg-light border-danger border-opacity-25 h-100 d-flex flex-column justify-content-center transition-hover">
+                                <h3 class="fw-bold mb-1">{{ bloodbank.a_pos }}</h3>
+                                <span class="text-danger fw-bold badge bg-danger text-white rounded-pill mx-auto px-3 py-2 mt-2">A+</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-4 border rounded bg-light border-danger border-opacity-25 h-100 d-flex flex-column justify-content-center transition-hover">
+                                <h3 class="fw-bold mb-1">{{ bloodbank.a_neg }}</h3>
+                                <span class="text-danger fw-bold badge bg-danger text-white rounded-pill mx-auto px-3 py-2 mt-2">A-</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-4 border rounded bg-light border-danger border-opacity-25 h-100 d-flex flex-column justify-content-center transition-hover">
+                                <h3 class="fw-bold mb-1">{{ bloodbank.b_pos }}</h3>
+                                <span class="text-danger fw-bold badge bg-danger text-white rounded-pill mx-auto px-3 py-2 mt-2">B+</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-4 border rounded bg-light border-danger border-opacity-25 h-100 d-flex flex-column justify-content-center transition-hover">
+                                <h3 class="fw-bold mb-1">{{ bloodbank.b_neg }}</h3>
+                                <span class="text-danger fw-bold badge bg-danger text-white rounded-pill mx-auto px-3 py-2 mt-2">B-</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-4 border rounded bg-light border-danger border-opacity-25 h-100 d-flex flex-column justify-content-center transition-hover">
+                                <h3 class="fw-bold mb-1">{{ bloodbank.ab_pos }}</h3>
+                                <span class="text-danger fw-bold badge bg-danger text-white rounded-pill mx-auto px-3 py-2 mt-2">AB+</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-4 border rounded bg-light border-danger border-opacity-25 h-100 d-flex flex-column justify-content-center transition-hover">
+                                <h3 class="fw-bold mb-1">{{ bloodbank.ab_neg }}</h3>
+                                <span class="text-danger fw-bold badge bg-danger text-white rounded-pill mx-auto px-3 py-2 mt-2">AB-</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-4 border rounded bg-light border-danger border-opacity-25 h-100 d-flex flex-column justify-content-center transition-hover">
+                                <h3 class="fw-bold mb-1">{{ bloodbank.o_pos }}</h3>
+                                <span class="text-danger fw-bold badge bg-danger text-white rounded-pill mx-auto px-3 py-2 mt-2">O+</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-4 border rounded bg-light border-danger border-opacity-25 h-100 d-flex flex-column justify-content-center transition-hover">
+                                <h3 class="fw-bold mb-1">{{ bloodbank.o_neg }}</h3>
+                                <span class="text-danger fw-bold badge bg-danger text-white rounded-pill mx-auto px-3 py-2 mt-2">O-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('bloodChart').getContext('2d');
+    
+    const getColors = () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return {
+            text: isDark ? '#F8FAFC' : '#334155',
+            grid: isDark ? '#334155' : '#E2E8F0',
+            bar: '#ef4444'
+        };
+    };
+
+    let colors = getColors();
+    
+    let bloodChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+            datasets: [{
+                label: 'Blood Stock (Units)',
+                data: [
+                    parseInt("{{ bloodbank.a_pos|default:'0' }}", 10), 
+                    parseInt("{{ bloodbank.a_neg|default:'0' }}", 10), 
+                    parseInt("{{ bloodbank.b_pos|default:'0' }}", 10), 
+                    parseInt("{{ bloodbank.b_neg|default:'0' }}", 10),
+                    parseInt("{{ bloodbank.ab_pos|default:'0' }}", 10),
+                    parseInt("{{ bloodbank.ab_neg|default:'0' }}", 10),
+                    parseInt("{{ bloodbank.o_pos|default:'0' }}", 10),
+                    parseInt("{{ bloodbank.o_neg|default:'0' }}", 10)
+                ],
+                backgroundColor: colors.bar,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: colors.text, precision: 0 },
+                    grid: { color: colors.grid }
+                },
+                x: {
+                    ticks: { color: colors.text, font: { weight: 'bold' } },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+    
+    window.addEventListener('themeChanged', () => {
+        colors = getColors();
+        bloodChart.options.scales.x.ticks.color = colors.text;
+        bloodChart.options.scales.y.ticks.color = colors.text;
+        bloodChart.options.scales.y.grid.color = colors.grid;
+        bloodChart.update();
+    });
+});
+</script>
+<style>
+.transition-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+.transition-hover {
+    transition: all 0.3s ease;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ hospital.name }} - LifeLink{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="bg-primary text-white py-5" style="background: linear-gradient(135deg, var(--primary-color) 0%, #0369a1 100%);">
+    <div class="container" data-aos="fade-down">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="display-5 fw-bold mb-2">{{ hospital.name }}</h2>
+                <p class="lead opacity-75 mb-2"><i class="fa-solid fa-location-dot"></i> {{ hospital.address|default:hospital.city }}</p>
+                <div class="d-flex align-items-center gap-3">
+                    {% if avg_rating > 0 %}
+                    <span class="badge bg-warning text-dark fs-6 rounded-pill"><i class="fa-solid fa-star"></i> {{ avg_rating|floatformat:1 }} / 5.0</span>
+                    <span>({{ reviews.count }} Reviews)</span>
+                    {% else %}
+                    <span class="badge bg-secondary fs-6 rounded-pill">No reviews yet</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end mt-4 mt-md-0">
+                <a href="tel:{{ hospital.phone }}" class="btn btn-light btn-lg rounded-pill fw-bold text-primary shadow-sm"><i class="fa-solid fa-phone me-2"></i> Call Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-5 mb-5">
+    <div class="row g-4">
+        <!-- Hospital Info & Beds -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 glass-card mb-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4">Live Bed Availability</h4>
+                    <div class="row text-center g-3">
+                        <div class="col-md-4">
+                            <div class="p-4 border rounded bg-light border-primary border-opacity-25 h-100">
+                                <h2 class="mb-1 text-primary fw-bold">{{ hospital.icu_beds }}</h2>
+                                <p class="text-muted fw-medium mb-0">ICU Beds</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-4 border rounded bg-light border-info border-opacity-25 h-100">
+                                <h2 class="mb-1 text-info fw-bold">{{ hospital.oxygen_beds }}</h2>
+                                <p class="text-muted fw-medium mb-0">Oxygen Beds</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-4 border rounded bg-light border-success border-opacity-25 h-100">
+                                <h2 class="mb-1 text-success fw-bold">{{ hospital.general_beds }}</h2>
+                                <p class="text-muted fw-medium mb-0">General Beds</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center d-flex justify-content-center gap-3">
+                        {% if hospital.total_beds > 0 %}
+                            <a href="{% url 'create_bed_request' hospital.id %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold"><i class="fa-solid fa-bed-pulse me-2"></i> Request a Bed</a>
+                        {% endif %}
+                        {% if user.is_authenticated and user.id != hospital.user.id %}
+                            <a href="{% url 'start_chat' hospital.user.id %}" class="btn btn-outline-primary btn-lg rounded-pill px-5 shadow-sm fw-bold"><i class="fa-solid fa-comment-medical me-2"></i> Message Hospital</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 glass-card mb-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4">Location Map</h4>
+                    <div id="hospital-detail-map" style="height: 300px; border-radius: 0.5rem; z-index: 1;"></div>
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="card shadow-sm border-0 glass-card">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4">Patient Reviews</h4>
+                    
+                    {% if reviews %}
+                        <div class="list-group list-group-flush mb-4">
+                            {% for review in reviews %}
+                            <div class="list-group-item px-0 py-3 bg-transparent">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-bold">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                    <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <div class="text-warning small mb-2">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i class="fa-solid fa-star"></i>
+                                        {% else %}
+                                            <i class="fa-regular fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <p class="mb-0 text-muted">{{ review.comment }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No reviews have been submitted for this hospital yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Form Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 glass-card sticky-top" style="top: 100px;">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Leave a Review</h5>
+                    {% if can_review %}
+                        <p class="text-muted small mb-4">Share your experience to help others.</p>
+                        <form method="post">
+                            {% csrf_token %}
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-muted" for="{{ field.id_for_label }}">{{ field.label|title }}</label>
+                                    {{ field }}
+                                    {% for error in field.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary rounded-pill shadow-sm fw-bold">Submit Review</button>
+                            </div>
+                        </form>
+                    {% elif user.is_authenticated %}
+                        <div class="alert alert-info border-0 shadow-sm text-center">
+                            <i class="fa-solid fa-circle-info mb-2 fs-4"></i>
+                            <p class="mb-0 small">You can only review hospitals that you have requested a bed from, or you have already reviewed this hospital.</p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-light border shadow-sm text-center">
+                            <p class="mb-3 small">Please log in to submit a review.</p>
+                            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-primary rounded-pill px-4">Log In</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if hospital_json %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{{ hospital_json|json_script:"hospital-data" }}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const mapElement = document.getElementById('hospital-detail-map');
+        if (!mapElement) return;
+
+        const dataScript = document.getElementById('hospital-data');
+        if (!dataScript) {
+            mapElement.parentElement.parentElement.style.display = 'none';
+            return;
+        }
+
+        const h = JSON.parse(dataScript.textContent);
+        if (!h || !h.lat || !h.lng) {
+            mapElement.parentElement.parentElement.style.display = 'none';
+            return;
+        }
+
+        // Initialize map
+        const map = L.map('hospital-detail-map').setView([h.lat, h.lng], 15);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Add marker
+        const marker = L.marker([h.lat, h.lng]).addTo(map);
+        marker.bindPopup(`<strong>${h.name}</strong><br>${h.beds} Total Beds`).openPopup();
+    });
+</script>
+{% else %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const mapElement = document.getElementById('hospital-detail-map');
+        if (mapElement) {
+            mapElement.parentElement.parentElement.style.display = 'none';
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

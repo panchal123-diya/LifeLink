@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}LifeLink - Find Hospital Beds & Blood Availability in Minutes{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="position-relative d-flex align-items-center" style="min-height: 85vh; background: linear-gradient(135deg, rgba(14, 165, 233, 0.9) 0%, rgba(3, 105, 161, 0.95) 100%), url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80') center/cover no-repeat;">
+    <div class="container text-center text-white position-relative" style="z-index: 1;">
+        <h1 class="display-3 fw-bold mb-4" data-aos="fade-down">Find Hospital Beds & Blood Availability in Minutes</h1>
+        <p class="lead mb-5 mx-auto opacity-75" style="max-width: 800px;" data-aos="fade-up" data-aos-delay="100">
+            Connecting Hospitals, Blood Banks, and Donors on One Emergency Platform. Because every second counts when saving a life.
+        </p>
+        <div class="d-flex flex-column flex-md-row justify-content-center gap-3" data-aos="zoom-in" data-aos-delay="200">
+            <a href="{% url 'hospital_search' %}" class="btn btn-light btn-lg rounded-pill px-5 shadow-lg fw-bold text-primary">
+                <i class="fa-solid fa-bed-pulse me-2"></i> Find Hospital Bed
+            </a>
+            <a href="{% url 'bloodbank_search' %}" class="btn btn-danger btn-lg rounded-pill px-5 shadow-lg fw-bold">
+                <i class="fa-solid fa-droplet me-2"></i> Find Blood
+            </a>
+            <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg rounded-pill px-5 fw-bold">
+                <i class="fa-solid fa-hand-holding-heart me-2"></i> Register as Donor
+            </a>
+        </div>
+    </div>
+    
+    <!-- Wave Shape Divider -->
+    <div class="position-absolute bottom-0 w-100 overflow-hidden" style="line-height: 0;">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="position: relative; display: block; width: calc(100% + 1.3px); height: 60px;">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C59.71,118.08,130.83,123.15,198.81,114.34,242.6,108.61,283.47,81.42,321.39,56.44Z" fill="var(--body-bg)"></path>
+        </svg>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-5" style="background-color: var(--body-bg);">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="0">
+                <h2 class="display-5 fw-bold text-primary counter">{{ total_hospitals }}</h2>
+                <p class="text-muted fw-medium mb-0">Total Hospitals</p>
+            </div>
+            <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="100">
+                <h2 class="display-5 fw-bold text-info counter">{{ available_beds }}</h2>
+                <p class="text-muted fw-medium mb-0">Available Beds</p>
+            </div>
+            <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="200">
+                <h2 class="display-5 fw-bold text-danger counter">{{ total_bloodbanks }}</h2>
+                <p class="text-muted fw-medium mb-0">Blood Banks</p>
+            </div>
+            <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="300">
+                <h2 class="display-5 fw-bold text-success counter">{{ total_donors }}</h2>
+                <p class="text-muted fw-medium mb-0">Registered Donors</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light" style="background-color: var(--card-bg) !important;">
+    <div class="container py-5">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h6 class="text-primary fw-bold text-uppercase tracking-wider">Simple Process</h6>
+            <h2 class="fw-bold mb-3">How LifeLink Works</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">Our streamlined platform makes it effortless to find critical healthcare resources or become a lifesaver.</p>
+        </div>
+        
+        <div class="row g-4 relative">
+            <div class="col-md-3 text-center" data-aos="fade-up" data-aos-delay="0">
+                <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-4" style="width: 80px; height: 80px;">
+                    <i class="fa-solid fa-magnifying-glass fa-2x"></i>
+                </div>
+                <h5 class="fw-bold">1. Search</h5>
+                <p class="text-muted small">Search for hospitals, beds, or specific blood groups in your city.</p>
+            </div>
+            
+            <div class="col-md-3 text-center" data-aos="fade-up" data-aos-delay="100">
+                <div class="d-inline-flex align-items-center justify-content-center bg-info bg-opacity-10 text-info rounded-circle mb-4" style="width: 80px; height: 80px;">
+                    <i class="fa-solid fa-list-check fa-2x"></i>
+                </div>
+                <h5 class="fw-bold">2. Check Availability</h5>
+                <p class="text-muted small">View real-time verified data updated by partnered institutions.</p>
+            </div>
+            
+            <div class="col-md-3 text-center" data-aos="fade-up" data-aos-delay="200">
+                <div class="d-inline-flex align-items-center justify-content-center bg-warning bg-opacity-10 text-warning rounded-circle mb-4" style="width: 80px; height: 80px;">
+                    <i class="fa-solid fa-handshake fa-2x"></i>
+                </div>
+                <h5 class="fw-bold">3. Connect</h5>
+                <p class="text-muted small">Contact the provider directly or trigger our smart donor matching system.</p>
+            </div>
+            
+            <div class="col-md-3 text-center" data-aos="fade-up" data-aos-delay="300">
+                <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-circle mb-4" style="width: 80px; height: 80px;">
+                    <i class="fa-solid fa-heart-pulse fa-2x"></i>
+                </div>
+                <h5 class="fw-bold">4. Save Lives</h5>
+                <p class="text-muted small">Fulfill the emergency quickly and help save a precious life.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animated Counter
+    document.addEventListener("DOMContentLoaded", () => {
+        const counters = document.querySelectorAll('.counter');
+        const speed = 200;
+
+        counters.forEach(counter => {
+            const updateCount = () => {
+                const target = +counter.getAttribute('data-target') || parseInt(counter.innerText);
+                if (!counter.getAttribute('data-target')) counter.setAttribute('data-target', target);
+                
+                const count = +counter.innerText;
+                const inc = target / speed;
+
+                if (count < target) {
+                    counter.innerText = Math.ceil(count + inc);
+                    setTimeout(updateCount, 15);
+                } else {
+                    counter.innerText = target;
+                }
+            };
+            
+            // start at 0
+            if (!counter.getAttribute('data-target')) {
+                counter.setAttribute('data-target', counter.innerText);
+                counter.innerText = '0';
+            }
+            updateCount();
+        });
+    });
+</script>
+{% endblock %}

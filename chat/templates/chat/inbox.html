@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Messages - HealthCare{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 glass-card">
+                <div class="card-header bg-transparent border-bottom pt-4 pb-3">
+                    <h4 class="fw-bold mb-0"><i class="fa-solid fa-comments me-2 text-primary"></i> Inbox</h4>
+                </div>
+                <div class="card-body p-0">
+                    {% if thread_data %}
+                        <div class="list-group list-group-flush">
+                            {% for item in thread_data %}
+                                <a href="{% url 'thread_detail' item.thread.id %}" class="list-group-item list-group-item-action p-4 border-bottom {% if item.unread_count > 0 %}bg-light{% endif %}">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                                {{ item.other_user.username|make_list|first|upper }}
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                                <h5 class="mb-0 fw-bold {% if item.unread_count > 0 %}text-dark{% else %}text-muted{% endif %}">
+                                                    {{ item.other_user.username }}
+                                                    <small class="badge bg-secondary ms-1">{{ item.other_user.get_role_display }}</small>
+                                                </h5>
+                                                {% if item.last_message %}
+                                                    <small class="text-muted">{{ item.last_message.timestamp|timesince }} ago</small>
+                                                {% endif %}
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <p class="mb-0 text-truncate {% if item.unread_count > 0 %}fw-bold text-dark{% else %}text-muted{% endif %}" style="max-width: 80%;">
+                                                    {% if item.last_message %}
+                                                        {% if item.last_message.sender == request.user %}
+                                                            <i class="fa-solid fa-check-double text-primary me-1" style="font-size: 0.8rem;"></i>
+                                                        {% endif %}
+                                                        {{ item.last_message.text }}
+                                                    {% else %}
+                                                        <i>No messages yet.</i>
+                                                    {% endif %}
+                                                </p>
+                                                {% if item.unread_count > 0 %}
+                                                    <span class="badge bg-danger rounded-pill">{{ item.unread_count }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fa-regular fa-comments fa-4x text-muted opacity-50 mb-3"></i>
+                            <h5 class="fw-bold text-muted">No Messages Yet</h5>
+                            <p class="text-muted mb-0">When you chat with hospitals or donors, conversations will appear here.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

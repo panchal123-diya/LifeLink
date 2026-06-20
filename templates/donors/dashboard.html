@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Donor Dashboard - LifeLink{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="row g-4">
+        <!-- Profile Column -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 glass-card mb-4">
+                <div class="card-body text-center pt-5 pb-4">
+                    {% if donor.user.profile_picture %}
+                        <img src="{{ donor.user.profile_picture.url }}" alt="Profile" class="rounded-circle mb-3 object-fit-cover shadow-sm" style="width: 100px; height: 100px; border: 3px solid var(--primary-color);">
+                    {% else %}
+                        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 100px; height: 100px; border: 3px solid var(--primary-color);">
+                            <i class="fa-solid fa-user fa-3x"></i>
+                        </div>
+                    {% endif %}
+                    <h4 class="card-title fw-bold text-primary">{{ donor.user.get_full_name|default:donor.user.username }}</h4>
+                    <p class="text-muted small"><i class="fa-solid fa-location-dot me-1"></i> {{ donor.user.city|default:"Location not set" }}</p>
+                    
+                    <div class="d-flex justify-content-center gap-2 mt-3 mb-4">
+                        <span class="badge bg-danger rounded-pill px-3 py-2 shadow-sm fs-6">
+                            <i class="fa-solid fa-droplet me-1"></i> {{ donor.blood_group|default:"N/A" }}
+                        </span>
+                        
+                        <!-- Eligibility Badge -->
+                        {% if donor.is_eligible %}
+                            <span class="badge bg-success rounded-pill px-3 py-2 shadow-sm fs-6">
+                                <i class="fa-solid fa-check-circle me-1"></i> Eligible
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary rounded-pill px-3 py-2 shadow-sm fs-6">
+                                <i class="fa-solid fa-ban me-1"></i> Not Eligible
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-start bg-light p-3 rounded-3 border">
+                        <small class="text-muted fw-bold text-uppercase d-block mb-1">Last Donation</small>
+                        <span class="fw-medium">{{ donor.last_donation_date|default:"Never donated" }}</span>
+                        {% if not donor.is_eligible %}
+                            <div class="form-text text-danger mt-1"><i class="fa-solid fa-circle-info"></i> You can donate again 90 days after your last donation.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm border-0 glass-card">
+                <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0">
+                    <h5 class="card-title fw-bold">Update Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                {% if field.name == 'is_available' %}
+                                    <div class="form-check form-switch fs-5">
+                                        {{ field }}
+                                        <label class="form-check-label ms-2 fs-6 fw-bold text-muted">{{ field.label }}</label>
+                                    </div>
+                                {% else %}
+                                    <label class="form-label small fw-bold text-muted">{{ field.label }}</label>
+                                    {{ field }}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm fw-bold mt-3">Save Preferences</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Requests Column -->
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 glass-card h-100">
+                <div class="card-header bg-transparent border-bottom-0 pt-4 pb-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0">Emergency Requests & History</h5>
+                    <span class="badge bg-primary rounded-pill">{{ responses.count }} Total</span>
+                </div>
+                <div class="card-body pt-0">
+                    {% if responses %}
+                        <div class="list-group list-group-flush gap-3">
+                            {% for response in responses %}
+                                <div class="list-group-item bg-light border rounded-3 p-4 shadow-sm position-relative overflow-hidden hover-transform" style="transition: transform 0.2s;">
+                                    <!-- Status Indicator Ribbon -->
+                                    {% if response.status == 'Accepted' %}
+                                        <div class="position-absolute top-0 start-0 w-100 bg-success" style="height: 4px;"></div>
+                                    {% elif response.status == 'Declined' %}
+                                        <div class="position-absolute top-0 start-0 w-100 bg-danger" style="height: 4px;"></div>
+                                    {% elif response.blood_request.status == 'Fulfilled' %}
+                                        <div class="position-absolute top-0 start-0 w-100 bg-secondary" style="height: 4px;"></div>
+                                    {% else %}
+                                        <div class="position-absolute top-0 start-0 w-100 bg-warning" style="height: 4px;"></div>
+                                    {% endif %}
+                                    
+                                    <div class="d-flex w-100 justify-content-between align-items-start mb-2 mt-1">
+                                        <h5 class="fw-bold text-dark mb-0">Blood Request for {{ response.blood_request.patient_name }}</h5>
+                                        <small class="text-muted"><i class="fa-solid fa-clock me-1"></i> {{ response.created_at|timesince }} ago</small>
+                                    </div>
+                                    
+                                    <div class="row g-2 mb-3 mt-2">
+                                        <div class="col-sm-6">
+                                            <p class="mb-1 text-muted small"><i class="fa-solid fa-hospital me-1"></i> <strong>Hospital:</strong> {{ response.blood_request.hospital_name }}</p>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="mb-1 text-muted small"><i class="fa-solid fa-location-dot me-1"></i> <strong>City:</strong> {{ response.blood_request.location_city }}</p>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="mb-1 text-muted small"><i class="fa-solid fa-droplet me-1 text-danger"></i> <strong>Required:</strong> <span class="badge bg-danger">{{ response.blood_request.blood_group }}</span> ({{ response.blood_request.units_required }} Units)</p>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="mb-1 text-muted small"><i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i> <strong>Urgency:</strong> {{ response.blood_request.urgency }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr class="opacity-25">
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            {% if response.status == 'Accepted' %}
+                                                <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fa-solid fa-handshake me-1"></i> You Accepted</span>
+                                            {% elif response.status == 'Declined' %}
+                                                <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="fa-solid fa-xmark me-1"></i> You Declined</span>
+                                            {% elif response.blood_request.status == 'Fulfilled' %}
+                                                <span class="badge bg-secondary px-3 py-2 rounded-pill"><i class="fa-solid fa-check-double me-1"></i> Request Closed</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="fa-solid fa-spinner fa-spin me-1"></i> Pending Your Response</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if response.status == 'Pending' and response.blood_request.status == 'Pending' %}
+                                            <div class="d-flex gap-2">
+                                                <form action="{% url 'respond_request' response.response_token %}" method="post" class="m-0">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="accept">
+                                                    <button type="submit" class="btn btn-success rounded-pill fw-bold shadow-sm px-4">Accept Request</button>
+                                                </form>
+                                                <form action="{% url 'respond_request' response.response_token %}" method="post" class="m-0">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="decline">
+                                                    <button type="submit" class="btn btn-outline-danger rounded-pill fw-bold shadow-sm px-4">Decline</button>
+                                                </form>
+                                            </div>
+                                        {% elif response.status == 'Accepted' %}
+                                            <div class="d-flex gap-2">
+                                                <a href="{% url 'start_chat' response.blood_request.requester.id %}" class="btn btn-outline-success rounded-pill fw-bold shadow-sm px-4">
+                                                    <i class="fa-solid fa-comment-medical me-2"></i> Message Patient
+                                                </a>
+                                                <button class="btn btn-success rounded-pill fw-bold shadow-sm px-4 disabled">Assigned to You</button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 my-5">
+                            <i class="fa-solid fa-inbox fa-4x text-muted opacity-50 mb-4"></i>
+                            <h4 class="fw-bold">No Requests Yet</h4>
+                            <p class="text-muted">You will be notified here when someone in your city urgently needs your blood group.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-transform:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Create Request - HealthBridge{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white py-3">
+                    <h4 class="mb-0"><i class="fa-solid fa-truck-medical"></i> Create Emergency Request</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Patient Name</label>
+                                {{ form.patient_name }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Hospital Name</label>
+                                {{ form.hospital_name }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Blood Group</label>
+                                {{ form.blood_group }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Units Required</label>
+                                {{ form.units_required }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Urgency</label>
+                                {{ form.urgency }}
+                            </div>
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">Location (City)</label>
+                                {{ form.location_city }}
+                                <div class="form-text">Matching will be prioritized for donors in this city.</div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100 btn-lg rounded-pill shadow-sm">Submit Request & Find Matches</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Chat with {{ other_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5 h-100">
+    <div class="row justify-content-center h-100">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0 d-flex flex-column" style="height: 80vh;">
+                
+                <!-- Chat Header -->
+                <div class="card-header bg-white border-bottom p-3 d-flex align-items-center rounded-top">
+                    <a href="{% url 'inbox' %}" class="btn btn-sm btn-light rounded-circle me-3">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </a>
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold me-3" style="width: 45px; height: 45px; font-size: 1.1rem;">
+                        {{ other_user.username|make_list|first|upper }}
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold">{{ other_user.username }}</h5>
+                        <small class="text-muted">{{ other_user.get_role_display }}</small>
+                    </div>
+                </div>
+                
+                <!-- Chat Body (Messages) -->
+                <div class="card-body bg-light overflow-auto p-4 d-flex flex-column gap-3" id="chat-box" style="background-color: #efeae2 !important; background-image: url('https://www.transparenttextures.com/patterns/cubes.png');">
+                    {% for msg in chat_messages %}
+                        <div class="d-flex {% if msg.sender == request.user %}justify-content-end{% else %}justify-content-start{% endif %}">
+                            <div class="p-3 shadow-sm" style="max-width: 75%; border-radius: 15px; {% if msg.sender == request.user %}background-color: #dcf8c6; border-bottom-right-radius: 0;{% else %}background-color: #ffffff; border-bottom-left-radius: 0;{% endif %}">
+                                <p class="mb-1 text-dark" style="font-size: 0.95rem; line-height: 1.4;">{{ msg.text }}</p>
+                                <div class="text-end text-muted" style="font-size: 0.7rem;">
+                                    {{ msg.timestamp|date:"M d, h:i A" }}
+                                    {% if msg.sender == request.user %}
+                                        <i class="fa-solid fa-check-double ms-1 {% if msg.is_read %}text-primary{% endif %}"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center text-muted my-auto bg-white p-3 rounded-pill shadow-sm mx-auto" style="font-size: 0.9rem;">
+                            <i class="fa-solid fa-lock me-1"></i> Messages are end-to-end encrypted. Say hi!
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Chat Footer (Input) -->
+                <div class="card-footer bg-white border-top p-3 rounded-bottom">
+                    <form id="chat-form" method="post" class="d-flex align-items-center gap-2">
+                        {% csrf_token %}
+                        <input type="text" name="text" id="chat-input" class="form-control rounded-pill px-4 py-2 border-0 bg-light" placeholder="Type a message..." autocomplete="off" required>
+                        <button type="submit" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 45px; height: 45px;">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const chatBox = document.getElementById('chat-box');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        
+        // Scroll to bottom on load
+        chatBox.scrollTop = chatBox.scrollHeight;
+        
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const text = chatInput.value.trim();
+            if (!text) return;
+            
+            const formData = new FormData(chatForm);
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'ok') {
+                    // Create new message bubble
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = 'd-flex justify-content-end mt-3'; // we add mt-3 if gap is not enough
+                    msgDiv.innerHTML = `
+                        <div class="p-3 shadow-sm" style="max-width: 75%; border-radius: 15px; background-color: #dcf8c6; border-bottom-right-radius: 0;">
+                            <p class="mb-1 text-dark" style="font-size: 0.95rem; line-height: 1.4;">${data.message.text}</p>
+                            <div class="text-end text-muted" style="font-size: 0.7rem;">
+                                ${data.message.timestamp}
+                                <i class="fa-solid fa-check ms-1"></i>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Remove the "empty" message if it exists
+                    const emptyMsg = chatBox.querySelector('.fa-lock');
+                    if (emptyMsg) {
+                        emptyMsg.parentElement.remove();
+                    }
+                    
+                    chatBox.appendChild(msgDiv);
+                    chatInput.value = '';
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+        
+        // Optional: Auto-refresh periodically to get new messages
+        // setInterval(() => { window.location.reload(); }, 10000); // Too simple, ruins UX. Better to use WebSockets, but we'll stick to manual refresh for receiving.
+    });
+</script>
+{% endblock %}

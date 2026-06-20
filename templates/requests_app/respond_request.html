@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Respond to Request - HealthBridge{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-danger border-2">
+                <div class="card-header bg-danger text-white py-3">
+                    <h4 class="mb-0"><i class="fa-solid fa-bell"></i> Urgent Blood Request</h4>
+                </div>
+                <div class="card-body p-4 text-center">
+                    {% if response.blood_request.status != 'Pending' %}
+                        <i class="fa-solid fa-circle-info fa-4x text-info mb-3"></i>
+                        <h3 class="fw-bold">Request No Longer Available</h3>
+                        <p class="text-muted">This request has already been fulfilled or cancelled. Thank you for your willingness to help!</p>
+                        <a href="{% url 'donor_dashboard' %}" class="btn btn-primary mt-3">Back to Dashboard</a>
+                    {% else %}
+                        <h3 class="fw-bold mb-4">Can you help?</h3>
+                        
+                        <div class="row text-start mb-4 bg-light p-3 rounded border">
+                            <div class="col-sm-6 mb-2">
+                                <strong>Patient:</strong> {{ response.blood_request.patient_name }}
+                            </div>
+                            <div class="col-sm-6 mb-2">
+                                <strong>Blood Group:</strong> <span class="badge bg-danger">{{ response.blood_request.blood_group }}</span>
+                            </div>
+                            <div class="col-sm-6 mb-2">
+                                <strong>Hospital:</strong> {{ response.blood_request.hospital_name }}
+                            </div>
+                            <div class="col-sm-6 mb-2">
+                                <strong>Urgency:</strong> 
+                                <span class="badge {% if response.blood_request.urgency == 'Critical' %}bg-danger{% elif response.blood_request.urgency == 'Urgent' %}bg-warning text-dark{% else %}bg-primary{% endif %}">
+                                    {{ response.blood_request.urgency }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted mb-4">By accepting this request, you agree to visit <strong>{{ response.blood_request.hospital_name }}</strong> in <strong>{{ response.blood_request.location_city }}</strong> to donate blood.</p>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow rounded-pill"><i class="fa-solid fa-check me-2"></i> I Accept, I will Donate</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
